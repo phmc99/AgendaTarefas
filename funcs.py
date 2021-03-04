@@ -8,19 +8,19 @@ def linha(tam = 42):
 def cabecalho(texto):
     print(linha())
     print(texto.center(42))
-    return linha()
+    return f'{linha()}'
 
 def menu(texto): 
     print(cabecalho('Menu'))
     n_opcao = 1
     
     for item in texto:
-        print(f'(\033[33m{n_opcao}\033[m) \033[34m{item}\033[m')
+        print(f'({n_opcao}) {item}')
         n_opcao += 1
 
-    print(f'\n{linha()}')
+    print(f'{linha()}')
     
-    opcao_escolha = escolha('\033[32mDigite sua opção: \033[m')
+    opcao_escolha = escolha('Digite sua opção: ')
     return opcao_escolha
 
 ##### Função para capturar a opção do usuário. #####
@@ -28,11 +28,8 @@ def escolha(mensagem):
     while True:
         try:
             numero_opcao = int(input(mensagem))
-        except (ValueError, TabError):
-            print('\033[31mERRO: por favor, digite uma opção com o número inteiro válido.\033[m')
-            continue
-        except (KeyboardInterrupt):
-            print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
+        except ValueError:
+            print('ERRO: por favor, digite uma opção com o número inteiro válido.')
         else:
             return numero_opcao
 
@@ -46,93 +43,120 @@ def mostra_calendario(ano, mes):
     return matriz_calendario
 
 ##### Funções para adicionar o compromisso. #####
-def adicionar():
+def consulta_mes():
+    meses_adicionados = []
+    dicio_meses = {
+        1:'Janeiro', 2:'Fevereiro', 3:'Março', 4:'Abril', 5:'Maio', 6:'Junho', 7:'Julho', 
+        8:'Agosto', 9:'Setembro', 10:'Outubro', 11:'Novembro', 12:'Dezembro'
+    }
+
+    with open('meses.txt', 'r') as arquivo:
+        for mes in arquivo:
+            meses_adicionados.append(int(mes.strip('\n')))
+        arquivo.close()
+
+    return sorted(meses_adicionados), dicio_meses
+
+def adiciona_mes():
+    meses = consulta_mes()
+    meses_ordenados = meses[0]
+    dicio_meses = meses[1]
+
+    for mes in meses_ordenados:
+        print(f'({mes}) {dicio_meses[mes]}')
+    
+    try:
+        mes = int(input('Informe o mês que deseja adicionar um compromisso: '))
+        if mes in meses_ordenados:
+            print('ERRO: esse mês já foi adicionado.')
+        elif mes not in meses_ordenados and mes >= 1 and mes <= 12:
+            meses_ordenados.append(mes)            
+            print(cabecalho(f'Mês {dicio_meses[mes]} foi adicionado com sucesso!'.center(42)))
+        else:
+            raise ValueError
+
+    except (ValueError, TypeError):
+        print('ERRO: por favor, digite uma opção com o número inteiro de 1 a 12.')
+
+    with open('meses.txt', 'w') as arquivo:
+        for mes in meses_ordenados:
+            arquivo.write(f'{mes}\n')
+        arquivo.close()
+
+    return mes
+
+def escolhe_mes():
+    meses = consulta_mes()
+    meses_ordenados = meses[0] 
+    dicio_meses = meses[1]
+
+    print(cabecalho('Meses registrados'))
+
+    if len(meses_ordenados) == 0:
+        print('ERRO: não exite nenhum mês registrado.')
+    else:
+        for mes in meses_ordenados:
+            print(f'({mes}) {dicio_meses[mes]}')
+
+    while True:
+        mes_escolhido = int(input('Digite a opção correspondente ao mês: '))
+
+        if mes_escolhido not in meses_ordenados:
+            print('ERRO: escolha entre uma das opções.')
+            break
+        else: 
+            return mes_escolhido
+            
+def remove_mes():
+    meses = consulta_mes()
+    meses_ordenados = meses[0]
+
+    if len(meses_ordenados) == 0:
+        print('ERRO: não exite nenhum mês registrado.')
+    else:
+        mes_remover = escolhe_mes()
+        remove_tudo(mes_remover)
+        meses_ordenados.remove(mes_remover)
+
+        with open('meses.txt', 'w') as arquivo:
+            for mes in meses_ordenados:
+                arquivo.write(f'{mes}\n')
+            arquivo.close()
+
+        print(cabecalho('Mês removido com sucesso!'))
+
+def adicionar(mes):
     print(cabecalho('Adicione seus compromissos.'))
 
-    opcao_calendario = 0
     opcao_compromisso = ''
     ano_atual = date.today().year
     ultimo_dia = calendar.mdays
-    meses = []
-    contador = 1
-    
-    # Escolhendo os meses para adicionar compromisso
-    while opcao_calendario != 'n':
-        opcao_calendario = ''
-        try:
-            mes = int(input('\033[32mInforme o mês que deseja adicionar um compromisso: \033[m'))
-            if mes in meses:
-                print('\033[31mERRO: esse mês já foi informado.\033[m')
-            elif mes not in meses and mes >= 1 and mes <= 12:
-                meses.append(mes)            
-            else:
-                raise ValueError
+    meses = consulta_mes()
+    meses_ordenados = meses[0]
 
-        except (ValueError, TypeError):
-            print('\033[31mERRO: por favor, digite uma opção com o número inteiro de 1 a 12.\033[m')
-
-        except (KeyboardInterrupt):
-            print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
-        
-        while opcao_calendario != 's' and opcao_calendario != 'n':
-            try:
-                opcao_calendario = input('Deseja informar mais um mês? (s/n): ')
-                
-                if opcao_calendario == 's' or opcao_calendario == 'n':
-                    if opcao_calendario == 's':
-                        contador += len(meses)
-                    else:
-                        pass
-                else:
-                    raise ValueError
-
-            except (ValueError, TypeError):
-                print('\033[31mERRO: por favor, digite uma opção válida, "s" ou "n".\033[m')
-            
-            except (KeyboardInterrupt):
-                print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
-
-    # Mostrando os meses selecionados
-    if len(meses) > 0:
-        for i in range(len(meses)):
-            mostra_calendario(ano_atual, meses[i])
-        
-    # Adicionando compromissos no arquivo
     with open('dadosagenda.txt', 'a') as arquivo:
         while opcao_compromisso != 'n':
-            while True:
-                if len(meses) == 1:
-                    mes_adiciona = meses[0]
-                    break
-                else:
-                    try:
-                        mes_adiciona = int(input(f'\033[32mEscolha um dos meses para adicionar o compromisso:\033[m \033[33m{str(meses).strip("[]")}: \033[m'))
-                        if mes_adiciona not in meses:
-                            raise ValueError
-                        else:
-                            break
-                    except KeyboardInterrupt:
-                        print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')
-                    except ValueError:
-                        print('\033[31mERRO: por favor, digite uma das opções que foram apresentadas.\033[m')
+
+            if len(meses_ordenados) == 1:
+                mes_adiciona = meses_ordenados[0]
+                mostra_calendario(ano_atual, mes_adiciona)
+            else:
+                mes_adiciona = mes
+                mostra_calendario(ano_atual, mes_adiciona)
 
             while True:
                 try:
-                    dia = int(input('\033[32mInforme o dia do compromisso: \033[m'))
-
+                    dia = int(input('Informe o dia do compromisso: '))
                     if dia >= 1 and dia <= ultimo_dia[mes_adiciona]:
                         break
                     else:
                         raise ValueError
-                            
-                except KeyboardInterrupt:
-                    print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')
                 except ValueError:
-                    print('\033[31mERRO: por favor, digite uma opção com o número inteiro que esteja presente no calendário.\033[m')
+                    print('ERRO: por favor, digite uma opção com o número inteiro que esteja presente no calendário.')
 
             while True:
                 try:
-                    horario = input('\033[32mInforme a hora desse compromisso \033[33m(hh:mm)\033[m: \033[m')
+                    horario = input('Informe a hora desse compromisso (hh:mm): ')
                     if len(horario) == 5 and horario[2] == ':':
                         hora = int(horario[:2])
                         minuto = int(horario[3:])
@@ -143,24 +167,19 @@ def adicionar():
                         break
                     else:
                         raise ValueError
-
-                except KeyboardInterrupt:
-                    print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')        
+    
                 except ValueError:
-                    print('\033[31mERRO: por favor, digite o formato de hora corretamente (hora:minuto).\033[m')
-                        
+                    print('ERRO: por favor, digite o formato de hora corretamente (hora:minuto).')
 
-            try:
-                compromisso = input('\033[32mInforme o compromisso: \033[m')
-
-            except KeyboardInterrupt:
-                print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')
+            compromisso = input('Informe o compromisso: ')
 
             try:
                 arquivo.write(f'{mes_adiciona:02}-{dia:02}-{hora:02}{minuto:02}-{compromisso}\n')
+            except UnboundLocalError:
+                print('ERRO: houve algum problema na hora de salvar seu arquivo.')
 
-            except (KeyboardInterrupt, UnboundLocalError):
-                print('\033[31m Erro: houve algum problema na hora de salvar seu arquivo.\033[m')
+            print(cabecalho('Compromisso adicionado com sucesso!'))
+            
 
             while True:
                 try:
@@ -172,16 +191,16 @@ def adicionar():
                         raise ValueError
 
                 except (ValueError, TypeError):
-                    print('\033[31mERRO: por favor, digite uma opção válida, "s" ou "n".\033[m')
-                
-                except (KeyboardInterrupt):
-                    print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
+                    print('ERRO: por favor, digite uma opção válida, "s" ou "n".')
+
+        arquivo.close()
 
 ##### Função para fazer a consulta dos compromissos. #####
-def consulta():
+def consulta(mes):
     print(cabecalho('Seus compromissos'))
 
-    lista_compromisso = []
+    todos_compromissos = []
+    compromissos_mes = []
     lista_indice = []
     hora = ''
     indice = 1
@@ -189,63 +208,72 @@ def consulta():
     
     with open('dadosagenda.txt', 'r') as arquivo:
         for compromissos in arquivo:
-            lista_compromisso.append(compromissos.split('-'))
+            todos_compromissos.append(compromissos.split('-'))
+
+    for x in range(len(todos_compromissos)):
+        if f'{mes:02}' == todos_compromissos[x][0]:
+            compromissos_mes.append(todos_compromissos[x])
 
     
-    lista_ordenada = sorted(lista_compromisso)
+    lista_ordenada = sorted(compromissos_mes)
 
-    if len(lista_compromisso) == 0:
-            print('\033[31mERRO: não exite nenhum compromisso na sua agenda.\033[m')
+    if len(compromissos_mes) == 0:
+        print('ERRO: não existe nenhum compromisso.')
 
     else:       
-        for i in range(len(lista_compromisso)):
+        for i in range(len(compromissos_mes)):
             lista_indice.append(indice)
             hora = lista_ordenada[i][2]
             print(f'({indice}) {lista_ordenada[i][1]}/{lista_ordenada[i][0]} - {hora[:2]}:{hora[2:]} - {lista_ordenada[i][3]}')
             indice += 1
-  
+
     return lista_indice, lista_ordenada
 
 ##### Funçao para apagar um ou mais compromissos. #####
-def remove():
-    print(cabecalho('Apaguando seus compromissos'))
-    listas = consulta()
+def remove(mes):
+    print(cabecalho('Apagando seus compromissos'))
+    listas = consulta(mes)
     compromissos = listas[1]
     indices = listas[0]
     opcao = ''
-    
+
+    with open('dadosagenda.txt', 'r') as arquivao:
+        todos_compromissos = [x.split('-') for x in arquivao]
+        arquivao.close()    
+
     while opcao != 'n':
         if len(compromissos) == 0:
-            print('\033[31mERRO: não exite nenhum compromisso na sua agenda.\033[m')
             break
         else:
             while True:
                 try:
                     resposta = int(input('Digite a opção do compromisso que deseja apagar: '))
+                        
                     if resposta in indices:
-                        compromissos.pop((resposta-1))
                         indices.pop((len(indices)-1))
+                        
                         break
                     else:
                         raise ValueError
                 
                 except (ValueError, TypeError):
-                    print('\033[31mERRO: por favor, digite uma das opções que foram apresentadas.\033[m')
-                except KeyboardInterrupt:
-                    print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
+                    print('ERRO: por favor, digite uma das opções que foram apresentadas.')
 
             with open('dadosagenda.txt', 'w') as arquivo:
-                for i in range(len(compromissos)):
-                        arquivo.write(f'{compromissos[i][0]}-{compromissos[i][1]}-{compromissos[i][2]}-{compromissos[i][3]}')
-                    
-            arquivo.close() 
+                for i in range(len(todos_compromissos)):
+                    if compromissos[resposta-1] != todos_compromissos[i]:
+                        arquivo.write(f'{todos_compromissos[i][0]}-{todos_compromissos[i][1]}-{todos_compromissos[i][2]}-{todos_compromissos[i][3]}')    
+                compromissos.pop((resposta-1))
+                arquivo.close()
+
+            print(cabecalho('Compromisso removido com sucesso!'))
 
             while True:
                 try:
                     opcao = input('Deseja apagar mais um compromisso? (s/n): ')
                 
                     if opcao == 's':
-                        consulta()
+                        consulta(mes)
                         break
                     elif opcao == 'n':
                         break
@@ -253,17 +281,34 @@ def remove():
                         raise ValueError
 
                 except (ValueError, TypeError):
-                    print('\033[31mERRO: por favor, digite uma opção válida, "s" ou "n".\033[m')
-                
-                except (KeyboardInterrupt):
-                    print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
+                    print('ERRO: por favor, digite uma opção válida, "s" ou "n".')
       
     return compromissos
 
+def remove_tudo(mes):
+    # Função para remover todos os compromissos de um mês.
+    lista_compromisso = []
+
+    with open('dadosagenda.txt', 'r') as arquivo:
+        for compromissos in arquivo:
+            lista_compromisso.append(compromissos.split('-'))
+        arquivo.close()
+
+    for i in range(len(lista_compromisso)-(len(lista_compromisso)//2)):
+        if f'{mes:02}' == lista_compromisso[i][0]:
+            lista_compromisso.remove(lista_compromisso[i])
+
+    with open('dadosagenda.txt', 'w') as arquivo:
+        for i in range(len(lista_compromisso)):
+            arquivo.write(f'{lista_compromisso[i][0]}-{lista_compromisso[i][1]}-{lista_compromisso[i][2]}-{lista_compromisso[i][3]}')
+        arquivo.close()
+
+    return lista_compromisso
+
 ##### Função para alterar um compromisso #####
-def altera():
+def altera(mes):
     print(cabecalho('Alterando seus compromissos'))
-    listas = consulta()
+    listas = consulta(mes)
     compromissos = listas[1]
     indices = listas[0]
     opcao = ''
@@ -271,7 +316,6 @@ def altera():
 
     while opcao != 'n':
         if len(compromissos) == 0:
-            print('\033[31mERRO: não exite nenhum compromisso na sua agenda.\033[m')
             break
         else:
             while True:
@@ -283,12 +327,9 @@ def altera():
                         raise ValueError
 
                 except (ValueError, TypeError):
-                    print('\033[31mERRO: por favor, digite uma das opções que foram apresentadas.\033[m')
-                except KeyboardInterrupt:
-                    print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
+                    print('ERRO: por favor, digite uma das opções que foram apresentadas.')
 
-
-            resposta = menu(['Alterar hora', 'Alterar data', 'Alterar compromisso'])
+            resposta = menu(['Alterar hora', 'Alterar data', 'Alterar compromisso', 'Cancelar'])
 
             if resposta == 1: # Alterando só a hora
                 while True:
@@ -308,17 +349,15 @@ def altera():
                         else:
                             raise ValueError
 
-                    except KeyboardInterrupt:
-                        print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')        
                     except ValueError:
-                        print('\033[31mERRO: por favor, digite o formato de hora corretamente (hora:minuto).\033[m')
+                        print('ERRO: por favor, digite o formato de hora corretamente (hora:minuto).')
                     
             
                 
-            if resposta == 2: # Alterando só a data
+            elif resposta == 2: # Alterando só a data
                 while True:
                     try:
-                        nova_data = input('Informe a nova data: ')
+                        nova_data = input('Informe a nova data (dia/mês): ')
                         if len(nova_data) == 5 and nova_data[2] == '/':
                             dia = int(nova_data[:2])
                             mes = int(nova_data[3:])
@@ -335,32 +374,32 @@ def altera():
                             break
                         else:
                             raise ValueError
-                    except KeyboardInterrupt:
-                        print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')
                     except ValueError:
-                        print('\033[31mERRO: data inválida.\033[m')
+                        print('ERRO: data inválida.')
 
         
-            if resposta == 3: # Alterando só o compromisso
-                try:
-                    novo_compromisso = input('Digite o novo compromisso: ')
-                    compromissos[alteracao-1].pop(3)
-                    compromissos[alteracao-1].insert(3, f'{novo_compromisso}\n')
-        
-                except KeyboardInterrupt:
-                    print('\033[31m Erro: o usuário preferiu não informar um compromisso.\033[m')
+            elif resposta == 3: # Alterando só o compromisso
+                novo_compromisso = input('Digite o novo compromisso: ')
+                compromissos[alteracao-1].pop(3)
+                compromissos[alteracao-1].insert(3, f'{novo_compromisso}\n')
+                    
+
+            elif resposta == 4: # Sair do menu
+                break
 
         with open('dadosagenda.txt', 'w') as arquivo:
             for i in range(len(compromissos)):
                 arquivo.write(f'{compromissos[i][0]}-{compromissos[i][1]}-{compromissos[i][2]}-{compromissos[i][3]}')
         arquivo.close()
 
+        print(cabecalho('Alteração feita com sucesso!'))
+
         while True:
             try:
                 opcao = input('Deseja alterar mais um compromisso? (s/n): ')
             
                 if opcao == 's':
-                    consulta()
+                    consulta(escolhe_mes())
                     break
                 elif opcao == 'n':
                     break
@@ -368,9 +407,6 @@ def altera():
                     raise ValueError
 
             except (ValueError, TypeError):
-                print('\033[31mERRO: por favor, digite uma opção válida, "s" ou "n".\033[m')
-            
-            except (KeyboardInterrupt):
-                print('\033[31m Erro: o usuário preferiu não informar uma opção.\033[m')
+                print('ERRO: por favor, digite uma opção válida, "s" ou "n".')
       
     return compromissos

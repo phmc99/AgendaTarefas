@@ -21,4 +21,4 @@
  - Antes de consultar os dados desse arquivo, eles passam por um tratamento, que é feito em algumas funções internas do programa.
 
 ### *Observações*:
-    No projeto foram utilizados conceitos básicos do Python, mesmo com esses fundamentos abordados durante o período, foi possível construir um programa relativamente completo e usual.
+ - No projeto foram utilizados conceitos básicos do Python, mesmo com esses fundamentos abordados durante o período, foi possível construir um programa relativamente completo e usual.
